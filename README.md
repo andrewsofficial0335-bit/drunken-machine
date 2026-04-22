@@ -135,8 +135,8 @@ Built for a game jam 🚀
 
 ## 📸 Screenshots
 
-![Gameplay 1](Screenshot 2026-04-22-1.png)
-![Gameplay 2](Screenshot 2026-04-22-2.png)
+![Gameplay 1](Screenshot-2026-04-22-1.png)
+![Gameplay 2](Screenshot-2026-04-22-2.png)
 
 ## 🧠 Final Words
 
