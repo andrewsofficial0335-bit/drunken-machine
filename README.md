@@ -89,8 +89,6 @@ http://localhost:8000
 ```
 /drunken-machine
   index.html
-  game.js
-  /assets (optional)
 ```
 
 ---
