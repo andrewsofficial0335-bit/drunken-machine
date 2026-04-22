@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍺 The Drunken Machine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Boogaloo&family=Nunito:wght@400;700;900&display=swap');
+
+  :root {
+    --gold: #f5c518;
+    --red: #e63946;
+    --green: #2dc653;
+    --dark: #0d0d0d;
+    --panel: rgba(255,255,255,0.07);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d0d0d;
+    color: #fff;
+    font-family: 'Nunito', sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    font-family: 'Boogaloo', cursive;
+    font-size: 2.8rem;
+    color: var(--gold);
+    text-shadow: 0 0 20px #f5c51899;
+    letter-spacing: 2px;
+    margin: 18px 0 4px;
+  }
+
+  #subtitle {
+    font-size: 0.95rem;
+    color: #aaa;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+  }
+
+  /* ── THEME SELECTION SCREEN ─────────────────────────── */
+  #themeScreen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    max-width: 520px;
+    padding: 24px;
+  }
+
+  #themeScreen h2 {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.6rem;
+    color: var(--gold);
+  }
+
+  #themeScreen p {
+    color: #bbb;
+    font-size: 0.9rem;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  .theme-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    width: 100%;
+  }
+
+  .theme-card {
+    background: var(--panel);
+    border: 2px solid #333;
+    border-radius: 14px;
+    padding: 18px 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s, transform 0.15s, background 0.2s;
+    user-select: none;
+  }
+
+  .theme-card:hover {
+    border-color: var(--gold);
+    background: rgba(245,197,24,0.1);
+    transform: scale(1.04);
+  }
+
+  .theme-card.selected {
+    border-color: var(--gold);
+    background: rgba(245,197,24,0.18);
+    box-shadow: 0 0 16px #f5c51855;
+  }
+
+  .theme-card .flag { font-size: 2.6rem; margin-bottom: 6px; }
+  .theme-card .tname { font-family: 'Boogaloo', cursive; font-size: 1.15rem; color: var(--gold); }
+  .theme-card .tdesc { font-size: 0.75rem; color: #aaa; margin-top: 3px; line-height: 1.4; }
+
+  #startBtn {
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.4rem;
+    background: var(--gold);
+    color: #000;
+    border: none;
+    border-radius: 40px;
+    padding: 12px 50px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px #f5c51866;
+    margin-top: 6px;
+  }
+
+  #startBtn:hover { transform: scale(1.07); box-shadow: 0 6px 28px #f5c518aa; }
+  #startBtn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ── GAME AREA ───────────────────────────────────────── */
+  #gameArea {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding-bottom: 20px;
+  }
+
+  #hud {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 420px;
+    max-width: 95vw;
+    padding: 6px 14px;
+    background: var(--panel);
+    border-radius: 12px;
+    border: 1px solid #333;
+  }
+
+  #hudTheme { font-family: 'Boogaloo', cursive; color: var(--gold); font-size: 1rem; }
+  #hudScore { font-family: 'Boogaloo', cursive; color: #fff; font-size: 1rem; }
+
+  #canvasWrapper {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 0 40px #0008;
+    border: 2px solid #333;
+  }
+
+#instructions {
+  width: 100%;
+  max-width: 520px;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #333;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: left;
+}
+
+#instructions h3 {
+  font-family: 'Boogaloo', cursive;
+  color: var(--gold);
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+#instructions ul {
+  list-style: none;
+  padding: 0;
+}
+
+#instructions li {
+  font-size: 0.85rem;
+  color: #ccc;
+  margin: 6px 0;
+}
+
+#instructions .tip {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  color: #aaa;
+  text-align: center;
+}
+
+  canvas {
+    display: block;
+    background: #111;
+    transition: transform 0.05s;
+  }
+
+  /* hangover bar outside canvas */
+  #hbWrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 420px;
+    max-width: 95vw;
+  }
+
+  #hbLabel {
+    font-family: 'Boogaloo', cursive;
+    font-size: 0.9rem;
+    color: #bbb;
+    white-space: nowrap;
+  }
+
+  #hbTrack {
+    flex: 1;
+    height: 18px;
+    background: #222;
+    border-radius: 9px;
+    overflow: hidden;
+    border: 1px solid #444;
+  }
+
+  #hbFill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2dc653, #f5c518, #e63946);
+    border-radius: 9px;
+    transition: width 0.2s, filter 0.2s;
+  }
+
+  #hbPct {
+    font-family: 'Boogaloo', cursive;
+    font-size: 0.9rem;
+    color: var(--gold);
+    min-width: 38px;
+    text-align: right;
+  }
+
+  #controls {
+    font-size: 0.78rem;
+    color: #666;
+    text-align: center;
+  }
+
+  #replayBtn {
+    display: none;
+    font-family: 'Boogaloo', cursive;
+    font-size: 1.2rem;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    padding: 10px 36px;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: transform 0.15s;
+  }
+  #replayBtn:hover { transform: scale(1.06); }
+</style>
+</head>
+<body>
+
+<h1>🍺 The Drunken Machine</h1>
+<p id="subtitle">A tale of gears, booze & bad decisions</p>
+
+<!-- ── THEME SELECTION ─────────────────────────────────── -->
+<div id="themeScreen">
+  <h2>🌍 Pick Your Drinking Destination</h2>
+  <p>Each location has a legendary drinking culture.<br>Choose wisely — your machine's sobriety depends on it.</p>
+
+  <div class="theme-grid">
+    <div class="theme-card" data-theme="germany" onclick="selectTheme(this)">
+      <div class="flag">🇩🇪</div>
+      <div class="tname">Germany</div>
+      <div class="tdesc">Beer capital of Earth.<br>Oktoberfest never ends.</div>
+    </div>
+    <div class="theme-card" data-theme="scotland" onclick="selectTheme(this)">
+      <div class="flag">🏴󠁧󠁢󠁳󠁣󠁴󠁿</div>
+      <div class="tname">Scotland</div>
+      <div class="tdesc">Single malt whisky flows<br>from the highlands forever.</div>
+    </div>
+    <div class="theme-card" data-theme="japan" onclick="selectTheme(this)">
+      <div class="flag">🇯🇵</div>
+      <div class="tname">Japan</div>
+      <div class="tdesc">Sake & izakaya culture —<br>politely wrecked all night.</div>
+    </div>
+    <div class="theme-card" data-theme="france" onclick="selectTheme(this)">
+      <div class="flag">🇫🇷</div>
+      <div class="tname">France</div>
+      <div class="tdesc">Wine with breakfast is<br>completely normal here.</div>
+    </div>
+  </div>
+
+  <button id="startBtn" disabled onclick="beginGame()">🎮 Start Game</button>
+
+  <div id="instructions">
+  <h3>🛠 How to Play</h3>
+
+  <ul>
+    <li>⬅️➡️ Move using <b>Arrow Keys</b> (or A / D)</li>
+    <li>💊 Catch <b>Remedies</b> to reduce hangover</li>
+    <li>🍺 Avoid <b>Alcohol</b> — it increases hangover</li>
+    <li>🤕 At <b>100% Hangover</b> → Machine shuts down</li>
+    <li>😵 More drunk = slower, wobbly controls</li>
+  </ul>
+
+  <p class="tip">
+    ⚠️ Tip: Not all falling things are your friends…
+  </p>
+  <p class="tip">💡 Tip: "Confidence high, coordination low."</p>
+</div>
+</div>
+
+<!-- ── GAME AREA ───────────────────────────────────────── -->
+<div id="gameArea">
+  <div id="hud">
+    <span id="hudTheme">🇩🇪 Germany</span>
+    <button id="pauseBtn" onclick="togglePause()" style="font-family:'Boogaloo',cursive;font-size:0.95rem;background:rgba(255,255,255,0.1);color:#fff;border:1.5px solid #555;border-radius:20px;padding:4px 16px;cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background='rgba(245,197,24,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">⏸ Pause</button>
+    <span id="hudScore">Score: 0</span>
+  </div>
+
+  <div id="canvasWrapper">
+    <canvas id="gameCanvas" width="420" height="560"></canvas>
+  </div>
+
+  <div id="hbWrap">
+    <span id="hbLabel">🤕 Hangover</span>
+    <div id="hbTrack"><div id="hbFill"></div></div>
+    <span id="hbPct">0%</span>
+  </div>
+
+  <div id="controls">← → Arrow keys to move &nbsp;|&nbsp; P / Esc to pause &nbsp;|&nbsp; R to restart</div>
+  <button id="replayBtn" onclick="showThemeScreen()">🔁 Pick New Destination</button>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// THEME DATA
+// ─────────────────────────────────────────────────────────
+const THEMES = {
+  germany: {
+    label: "🇩🇪 Germany",
+    bgColor: "#1a1200",
+    bgGradient: ["#1a1200","#2e1f00"],
+    accentColor: "#f5c518",
+    skyColor: "#3a2800",
+    groundColor: "#5c3d00",
+    alcoholEmoji: "🍺",
+    remedyEmoji: "💊",
+    alcoholLabel: "Stein of Beer",
+    remedyLabel: "Hangover Pill",
+    bgBuildings: ["🏰","🏗️","⛪"],
+    alcoholLines: [
+      "Prost! Now everything spins clockwise!",
+      "One more stein? Ja, terrible idea!",
+      "Gears just started speaking German now!",
+      "Oktoberfest took my motor skills!",
+      "Circuits flooded with Bavarian lager, danke!",
+    ],
+    remedyLines: [
+      "Wunderbar! Gears clicking into place!",
+      "Pills stronger than German engineering!",
+      "System rebooted. Efficiency restored. Sehr gut!",
+      "Brain fog lifted over the Rhine!",
+      "Sober enough to build a Volkswagen!",
+    ]
+  },
+  scotland: {
+    label: "🏴󠁧󠁢󠁳󠁣󠁴󠁿 Scotland",
+    bgColor: "#0a1a0a",
+    bgGradient: ["#0a1a0a","#0e2610"],
+    accentColor: "#7ec8a0",
+    skyColor: "#0f2910",
+    groundColor: "#1a4520",
+    alcoholEmoji: "🥃",
+    remedyEmoji: "🍵",
+    alcoholLabel: "Scotch Whisky",
+    remedyLabel: "Highland Tea",
+    bgBuildings: ["🏔️","🗼","⛩️"],
+    alcoholLines: [
+      "Och! Pistons running on pure whisky now!",
+      "Vision: plaid. Function: absolutely not!",
+      "Bagpipes playing inside my CPU!",
+      "Malt bypassed all safety protocols, laddie!",
+      "Gears wearing kilts. Physics abandoned entirely!",
+    ],
+    remedyLines: [
+      "Aye, feeling braw and battle-ready!",
+      "Tea cleared the Highland fog oot!",
+      "Systems running like a bonnie machine!",
+      "Sober as a Scottish Sunday morning!",
+      "Circuits refreshed by ancient herbal magic!",
+    ]
+  },
+  japan: {
+    label: "🇯🇵 Japan",
+    bgColor: "#0d0010",
+    bgGradient: ["#0d0010","#150020"],
+    accentColor: "#ff6eb4",
+    skyColor: "#1a0028",
+    groundColor: "#2e0042",
+    alcoholEmoji: "🍶",
+    remedyEmoji: "🍡",
+    alcoholLabel: "Sake Cup",
+    remedyLabel: "Mochi Remedy",
+    bgBuildings: ["⛩️","🗼","🌸"],
+    alcoholLines: [
+      "Sake input. Dignity output: zero. Sumimasen!",
+      "Cherry blossoms melting into my RAM!",
+      "Izakaya protocol: arms flailing, mouth open!",
+      "BSOD but make it kawaii and wet!",
+      "Gyroscope dead. Origami folding the wrong way!",
+    ],
+    remedyLines: [
+      "Itadakimasu! Sensors fully reactivated now!",
+      "Mochi unlocked hidden precision mode!",
+      "Nani?! I can walk straight again!",
+      "Body restored with sweet Japanese grace!",
+      "Running at 100% like a bullet train!",
+    ]
+  },
+  france: {
+    label: "🇫🇷 France",
+    bgColor: "#10050d",
+    bgGradient: ["#10050d","#1e0a18"],
+    accentColor: "#c084fc",
+    skyColor: "#1a0a22",
+    groundColor: "#3d1a55",
+    alcoholEmoji: "🍷",
+    remedyEmoji: "🥐",
+    alcoholLabel: "Bordeaux Wine",
+    remedyLabel: "French Croissant",
+    bgBuildings: ["🗼","🏰","🌹"],
+    alcoholLines: [
+      "Mon Dieu! Hydraulics swimming in Bordeaux!",
+      "C'est la vie — and also total collapse!",
+      "Bonjour, I've lost all my motor functions!",
+      "Wine made my gears romantically useless!",
+      "Sacré bleu! Falling — but with elegance!",
+    ],
+    remedyLines: [
+      "Magnifique! Croissant rebooted the mainframe!",
+      "Tres bien! Circuits crisp as a baguette!",
+      "Vive la machine! Energy fully restored!",
+      "Paris alignment algorithm: completely nominal!",
+      "Mon ami, I feel fantastically sober now!",
+    ]
+  }
+};
+
+// ─────────────────────────────────────────────────────────
+// AUDIO (Web Audio API — no external files needed)
+// ─────────────────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new AudioCtx();
+  return audioCtx;
+}
+
+function playTone(freq, type, duration, vol = 0.3) {
+  try {
+    const ctx = getAudio();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ctx.currentTime + duration);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch(e) {}
+}
+
+function sfxAlcohol() {
+  playTone(300, 'sawtooth', 0.4, 0.25);
+  setTimeout(() => playTone(200, 'sawtooth', 0.3, 0.2), 150);
+}
+
+function sfxRemedy() {
+  playTone(600, 'sine', 0.2, 0.3);
+  setTimeout(() => playTone(800, 'sine', 0.2, 0.25), 100);
+  setTimeout(() => playTone(1000, 'sine', 0.15, 0.2), 200);
+}
+
+function sfxGameOver() {
+  [400, 320, 250, 180].forEach((f, i) =>
+    setTimeout(() => playTone(f, 'sawtooth', 0.5, 0.35), i * 200)
+  );
+}
+
+// ─────────────────────────────────────────────────────────
+// GAME STATE
+// ─────────────────────────────────────────────────────────
+const canvas = document.getElementById("gameCanvas");
+const ctx2 = canvas.getContext("2d");
+const W = canvas.width, H = canvas.height;
+
+let selectedThemeName = null;
+let gameRunning = false;
+let gamePaused = false;
+let player, items, hangover, speedFactor, score;
+let wobble = 0, wobbleDir = 1;
+let popups = [];
+let frameCount = 0;
+let keys = {};
+
+// ─────────────────────────────────────────────────────────
+// UI HELPERS
+// ─────────────────────────────────────────────────────────
+function selectTheme(card) {
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('selected'));
+  card.classList.add('selected');
+  selectedThemeName = card.dataset.theme;
+  document.getElementById('startBtn').disabled = false;
+}
+
+function showThemeScreen() {
+  gameRunning = false;
+  document.getElementById('gameArea').style.display = 'none';
+  document.getElementById('themeScreen').style.display = 'flex';
+  document.getElementById('replayBtn').style.display = 'none';
+}
+
+function beginGame() {
+  if (!selectedThemeName) return;
+  document.getElementById('themeScreen').style.display = 'none';
+  document.getElementById('gameArea').style.display = 'flex';
+  const t = THEMES[selectedThemeName];
+  document.getElementById('hudTheme').textContent = t.label;
+  startGame();
+}
+
+function updateHangoverBar() {
+  const pct = Math.round(hangover);
+  document.getElementById('hbFill').style.width = pct + '%';
+  document.getElementById('hbPct').textContent = pct + '%';
+  if (pct > 70) {
+    document.getElementById('hbFill').style.filter = 'hue-rotate(0deg) saturate(2)';
+  } else if (pct > 40) {
+    document.getElementById('hbFill').style.filter = 'hue-rotate(-20deg)';
+  } else {
+    document.getElementById('hbFill').style.filter = 'none';
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// INIT GAME
+// ─────────────────────────────────────────────────────────
+function startGame() {
+  player = { x: W / 2 - 25, y: H - 80, width: 54, height: 70, vy: 0 };
+  items = [];
+  hangover = 0;
+  speedFactor = 0.4;
+  score = 0;
+  wobble = 0; wobbleDir = 1;
+  popups = [];
+  frameCount = 0;
+  gameRunning = true;
+  gamePaused = false;
+  canvas.setAttribute("tabindex", "0");
+canvas.focus();
+  document.getElementById('pauseBtn').textContent = '⏸ Pause';
+  canvas.style.filter = '';
+  document.getElementById('hudScore').textContent = 'Score: 0';
+  document.getElementById('replayBtn').style.display = 'none';
+  canvas.style.transform = '';
+  updateHangoverBar();
+  gameLoop();
+}
+
+// ─────────────────────────────────────────────────────────
+// CONTROLS
+// ─────────────────────────────────────────────────────────
+function togglePause() {
+  if (!gameRunning && hangover < 100) return; // can't pause on game over
+  if (!gameRunning) return;
+  gamePaused = !gamePaused;
+  document.getElementById('pauseBtn').textContent = gamePaused ? '▶ Resume' : '⏸ Pause';
+  canvas.style.filter = gamePaused ? 'blur(3px) brightness(0.5)' : '';
+}
+
+document.addEventListener("keydown", (e) => {
+  keys[e.key] = true;
+  if (!gameRunning && e.key.toLowerCase() === 'r') showThemeScreen();
+  if (e.key.toLowerCase() === 'p' || e.key === 'Escape') togglePause();
+});
+document.addEventListener("keyup", (e) => { keys[e.key] = false; });
+
+// Mobile touch
+let touchStartX = null;
+canvas.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, {passive:true});
+canvas.addEventListener('touchmove', e => {
+  if (touchStartX === null || !gameRunning) return;
+  const dx = e.touches[0].clientX - touchStartX;
+  player.x += dx * 0.8;
+  touchStartX = e.touches[0].clientX;
+  e.preventDefault();
+}, {passive:false});
+
+// ─────────────────────────────────────────────────────────
+// SPAWN ITEMS
+// ─────────────────────────────────────────────────────────
+function spawnItem() {
+  const t = THEMES[selectedThemeName];
+  const isAlcohol = Math.random() < 0.35;
+  const lane = Math.floor(Math.random() * 6);
+  items.push({
+    x: 20 + lane * ((W - 40) / 5),
+    y: -30,
+    size: 36,
+    type: isAlcohol ? "alcohol" : "remedy",
+    emoji: isAlcohol ? t.alcoholEmoji : t.remedyEmoji,
+    speed: 2.5 + Math.random() * 2 + frameCount / 3000,
+    wobX: (Math.random() - 0.5) * 1.5
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// POPUPS
+// ─────────────────────────────────────────────────────────
+function addPopup(text, x, y, color) {
+  popups.push({ text, x, y, alpha: 1, dy: -1.5, color, life: 90 });
+}
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ─────────────────────────────────────────────────────────
+// UPDATE
+// ─────────────────────────────────────────────────────────
+function update() {
+  frameCount++;
+  const t = THEMES[selectedThemeName];
+  const drunkness = hangover / 100;
+
+  // player movement
+  let moveSpeed = 5 * speedFactor;
+  if (keys["ArrowLeft"] || keys["a"]) player.x -= moveSpeed;
+  if (keys["ArrowRight"] || keys["d"]) player.x += moveSpeed;
+
+  // wobble drift when drunk
+  if (drunkness > 0.3) {
+    wobble += wobbleDir * 0.08 * drunkness;
+    if (Math.abs(wobble) > 4 * drunkness) wobbleDir *= -1;
+    player.x += wobble * drunkness;
+  }
+
+  // clamp
+  player.x = Math.max(0, Math.min(W - player.width, player.x));
+
+  // spawn
+  const spawnRate = 0.025 + frameCount / 60000;
+  if (Math.random() < spawnRate) spawnItem();
+
+  // item logic
+  items.forEach(item => {
+    item.y += item.speed;
+    item.x += item.wobX * (hangover > 50 ? 0.5 : 0); // items also drift when very drunk
+
+    // collision
+    if (
+      item.y + item.size > player.y &&
+      item.y < player.y + player.height &&
+      item.x + item.size > player.x &&
+      item.x < player.x + player.width
+    ) {
+      if (item.type === "alcohol") {
+        hangover = Math.min(100, hangover + 12);
+        speedFactor = Math.max(0.3, 1 - (hangover / 130));
+        sfxAlcohol();
+        addPopup(pick(t.alcoholLines), item.x - 40, item.y - 20, "#e63946");
+        score = Math.max(0, score - 5);
+      } else {
+        hangover = Math.max(0, hangover - 15);
+        speedFactor = Math.min(1, 0.4 + (1 - hangover / 100) * 0.8);
+        sfxRemedy();
+        addPopup(pick(t.remedyLines), item.x - 40, item.y - 20, "#2dc653");
+        score += 10;
+      }
+      updateHangoverBar();
+      document.getElementById('hudScore').textContent = 'Score: ' + score;
+      item.y = H + 100; // remove
+    }
+  });
+
+  // remove off-screen
+  items = items.filter(i => i.y < H + 50);
+
+  // popups
+  popups.forEach(p => { p.y += p.dy; p.alpha -= 0.012; p.life--; });
+  popups = popups.filter(p => p.alpha > 0);
+
+  // shake canvas
+  if (hangover > 70) {
+    const intensity = (hangover - 70) / 30;
+    const sx = (Math.random() - 0.5) * 10 * intensity;
+    const sy = (Math.random() - 0.5) * 8 * intensity;
+    canvas.style.transform = `translate(${sx}px,${sy}px) rotate(${sx * 0.3}deg)`;
+  } else {
+    canvas.style.transform = '';
+  }
+
+  // game over
+  if (hangover >= 100 && gameRunning) {
+    gameRunning = false;
+    sfxGameOver();
+    setTimeout(() => {
+      document.getElementById('replayBtn').style.display = 'inline-block';
+    }, 1200);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// DRAW BACKGROUND (procedural per theme)
+// ─────────────────────────────────────────────────────────
+function drawBackground() {
+  const t = THEMES[selectedThemeName];
+
+  // sky gradient
+  const sky = ctx2.createLinearGradient(0, 0, 0, H * 0.7);
+  sky.addColorStop(0, t.bgGradient[0]);
+  sky.addColorStop(1, t.bgGradient[1]);
+  ctx2.fillStyle = sky;
+  ctx2.fillRect(0, 0, W, H);
+
+  // stars / ambient dots
+  ctx2.fillStyle = "rgba(255,255,255,0.3)";
+  for (let i = 0; i < 40; i++) {
+    const sx = ((i * 137 + frameCount * 0.1) % W);
+    const sy = ((i * 73) % (H * 0.6));
+    ctx2.beginPath();
+    ctx2.arc(sx, sy, 0.8, 0, Math.PI*2);
+    ctx2.fill();
+  }
+
+  // silhouette buildings
+  ctx2.fillStyle = "rgba(0,0,0,0.45)";
+  const buildingData = [
+    [0, 80, 60, 200], [55, 100, 70, 180], [120, 60, 50, 220],
+    [165, 90, 80, 190], [240, 50, 55, 230], [290, 110, 65, 170],
+    [350, 70, 70, 210]
+  ];
+  buildingData.forEach(([bx, bh, bw]) => {
+    ctx2.fillRect(bx, H - bh - 80, bw, bh + 80);
+  });
+
+  // ground
+  const grd = ctx2.createLinearGradient(0, H - 80, 0, H);
+  grd.addColorStop(0, t.groundColor);
+  grd.addColorStop(1, "#000");
+  ctx2.fillStyle = grd;
+  ctx2.fillRect(0, H - 80, W, 80);
+
+  // ground line
+  ctx2.strokeStyle = t.accentColor + "44";
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.moveTo(0, H - 80);
+  ctx2.lineTo(W, H - 80);
+  ctx2.stroke();
+}
+
+// ─────────────────────────────────────────────────────────
+// DRAW PLAYER (drunken robot)
+// ─────────────────────────────────────────────────────────
+function drawPlayer() {
+  const t = THEMES[selectedThemeName];
+  const px = player.x, py = player.y;
+  const drunkness = hangover / 100;
+  const tilt = Math.sin(frameCount * 0.07) * drunkness * 18;
+
+  ctx2.save();
+  ctx2.translate(px + player.width / 2, py + player.height);
+  ctx2.rotate((tilt * Math.PI) / 180);
+
+  // legs
+  ctx2.fillStyle = "#444";
+  ctx2.fillRect(-8, -22, 8, 22); // left leg
+  ctx2.fillRect(2, -22, 8, 22);  // right leg
+
+  // boot details
+  ctx2.fillStyle = "#222";
+  ctx2.fillRect(-10, -4, 10, 4);
+  ctx2.fillRect(2, -4, 10, 4);
+
+  // body
+  const bodyGrad = ctx2.createLinearGradient(-20, -65, 20, -20);
+  bodyGrad.addColorStop(0, "#7a7a7a");
+  bodyGrad.addColorStop(1, "#444");
+  ctx2.fillStyle = bodyGrad;
+  ctx2.beginPath();
+  ctx2.roundRect(-20, -65, 40, 43, 6);
+  ctx2.fill();
+
+  // chest panel
+  ctx2.fillStyle = t.accentColor + "55";
+  ctx2.fillRect(-13, -58, 26, 14);
+
+  // chest lights (blink when drunk)
+  [[-7,-52],[0,-52],[7,-52]].forEach(([lx,ly], i) => {
+    const blink = drunkness > 0.5 && Math.sin(frameCount * 0.2 + i * 2) > 0.3;
+    ctx2.fillStyle = blink ? "#e63946" : (drunkness > 0.3 ? "#f5c518" : "#2dc653");
+    ctx2.beginPath();
+    ctx2.arc(lx, ly, 3, 0, Math.PI*2);
+    ctx2.fill();
+  });
+
+  // arms (flail when drunk)
+  const armSwing = drunkness * Math.sin(frameCount * 0.12) * 35;
+  ctx2.fillStyle = "#555";
+  ctx2.save();
+  ctx2.translate(-20, -52);
+  ctx2.rotate((-30 + armSwing) * Math.PI / 180);
+  ctx2.fillRect(-18, -4, 18, 8);
+  ctx2.restore();
+  ctx2.save();
+  ctx2.translate(20, -52);
+  ctx2.rotate((30 - armSwing) * Math.PI / 180);
+  ctx2.fillRect(0, -4, 18, 8);
+  ctx2.restore();
+
+  // neck
+  ctx2.fillStyle = "#555";
+  ctx2.fillRect(-6, -70, 12, 7);
+
+  // head
+  const headGrad = ctx2.createLinearGradient(-18, -95, 18, -68);
+  headGrad.addColorStop(0, "#8a8a8a");
+  headGrad.addColorStop(1, "#555");
+  ctx2.fillStyle = headGrad;
+  ctx2.beginPath();
+  ctx2.roundRect(-18, -95, 36, 26, 8);
+  ctx2.fill();
+
+  // head antenna
+  ctx2.strokeStyle = t.accentColor;
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  ctx2.moveTo(0, -95);
+  ctx2.lineTo(0, -108);
+  ctx2.stroke();
+  ctx2.fillStyle = t.accentColor;
+  ctx2.beginPath();
+  ctx2.arc(0, -110, 4, 0, Math.PI * 2);
+  ctx2.fill();
+
+  // eyes
+  const eyeY = -86;
+  if (drunkness > 0.6) {
+    // X eyes (very drunk)
+    ctx2.strokeStyle = "#e63946";
+    ctx2.lineWidth = 2.5;
+    [[-8, 0],[8, 0]].forEach(([ex]) => {
+      ctx2.beginPath(); ctx2.moveTo(ex-4, eyeY-4); ctx2.lineTo(ex+4, eyeY+4); ctx2.stroke();
+      ctx2.beginPath(); ctx2.moveTo(ex+4, eyeY-4); ctx2.lineTo(ex-4, eyeY+4); ctx2.stroke();
+    });
+  } else {
+    // normal eyes — droop when moderately drunk
+    const eyeH = drunkness > 0.3 ? 3 : 6;
+    ctx2.fillStyle = drunkness > 0.4 ? "#f5c518" : "#00e5ff";
+    ctx2.fillRect(-12, eyeY - eyeH, 8, eyeH * 2);
+    ctx2.fillRect(4, eyeY - eyeH, 8, eyeH * 2);
+  }
+
+  // mouth
+  ctx2.strokeStyle = drunkness > 0.5 ? "#e63946" : "#aaa";
+  ctx2.lineWidth = 2;
+  ctx2.beginPath();
+  if (drunkness > 0.5) {
+    ctx2.arc(0, -73, 7, 0.2, Math.PI - 0.2); // frown
+  } else {
+    ctx2.arc(0, -77, 5, 0, Math.PI); // smile
+  }
+  ctx2.stroke();
+
+  // drunk blush
+  if (drunkness > 0.3) {
+    ctx2.fillStyle = `rgba(220,50,80,${drunkness * 0.35})`;
+    ctx2.beginPath(); ctx2.ellipse(-12, -79, 6, 4, 0, 0, Math.PI*2); ctx2.fill();
+    ctx2.beginPath(); ctx2.ellipse(12, -79, 6, 4, 0, 0, Math.PI*2); ctx2.fill();
+  }
+
+  ctx2.restore();
+}
+
+// ─────────────────────────────────────────────────────────
+// DRAW ITEMS
+// ─────────────────────────────────────────────────────────
+function drawItems() {
+  items.forEach(item => {
+    ctx2.save();
+    // slight rotation on fall
+    ctx2.translate(item.x + item.size / 2, item.y + item.size / 2);
+    ctx2.rotate(Math.sin(item.y * 0.05) * 0.3);
+
+    // glow for remedies
+    if (item.type === "remedy") {
+      ctx2.shadowColor = "#2dc653";
+      ctx2.shadowBlur = 14;
+    } else {
+      ctx2.shadowColor = "#e63946";
+      ctx2.shadowBlur = 10;
+    }
+
+    ctx2.font = `${item.size}px serif`;
+    ctx2.textAlign = "center";
+    ctx2.textBaseline = "middle";
+    ctx2.fillText(item.emoji, 0, 0);
+    ctx2.shadowBlur = 0;
+
+    // label underneath
+    ctx2.font = "bold 8px 'Nunito', sans-serif";
+    ctx2.fillStyle = item.type === "remedy" ? "#2dc653" : "#e63946";
+    ctx2.fillText(item.type === "alcohol" ?
+      THEMES[selectedThemeName].alcoholLabel :
+      THEMES[selectedThemeName].remedyLabel, 0, item.size / 2 + 10);
+
+    ctx2.restore();
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// DRAW POPUPS
+// ─────────────────────────────────────────────────────────
+function drawPopups() {
+  popups.forEach(p => {
+    ctx2.save();
+    ctx2.globalAlpha = Math.max(0, p.alpha);
+    ctx2.font = "bold 11px 'Nunito', sans-serif";
+    ctx2.fillStyle = p.color;
+    ctx2.strokeStyle = "#000";
+    ctx2.lineWidth = 3;
+    // wrap text crudely
+    const maxW = 130;
+    const words = p.text.split(" ");
+    let line1 = words.slice(0, 3).join(" ");
+    let line2 = words.slice(3).join(" ");
+    ctx2.strokeText(line1, Math.max(10, Math.min(W - maxW, p.x)), p.y);
+    ctx2.fillText(line1, Math.max(10, Math.min(W - maxW, p.x)), p.y);
+    if (line2) {
+      ctx2.strokeText(line2, Math.max(10, Math.min(W - maxW, p.x)), p.y + 14);
+      ctx2.fillText(line2, Math.max(10, Math.min(W - maxW, p.x)), p.y + 14);
+    }
+    ctx2.restore();
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// DRAW OVERLAY (hangover vignette)
+// ─────────────────────────────────────────────────────────
+function drawOverlay() {
+  const drunkness = hangover / 100;
+  if (drunkness > 0.2) {
+    const vgn = ctx2.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.8);
+    vgn.addColorStop(0, "transparent");
+    vgn.addColorStop(1, `rgba(180,0,50,${drunkness * 0.4})`);
+    ctx2.fillStyle = vgn;
+    ctx2.fillRect(0, 0, W, H);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// DRAW HUD IN CANVAS (score, theme name)
+// ─────────────────────────────────────────────────────────
+function drawCanvasHud() {
+  const t = THEMES[selectedThemeName];
+  ctx2.font = "bold 11px 'Nunito', sans-serif";
+  ctx2.fillStyle = t.accentColor + "cc";
+  ctx2.textAlign = "left";
+  ctx2.fillText("↔ Move  •  Catch " + t.remedyEmoji + " remedies!", 8, 14);
+}
+
+// ─────────────────────────────────────────────────────────
+// GAME OVER SCREEN
+// ─────────────────────────────────────────────────────────
+function drawGameOver() {
+  const t = THEMES[selectedThemeName];
+  // dark overlay
+  ctx2.fillStyle = "rgba(0,0,0,0.82)";
+  ctx2.fillRect(0, 0, W, H);
+
+  // panel
+  ctx2.fillStyle = "rgba(255,255,255,0.06)";
+  ctx2.beginPath();
+  ctx2.roundRect(40, 160, W - 80, 220, 18);
+  ctx2.fill();
+  ctx2.strokeStyle = t.accentColor + "88";
+  ctx2.lineWidth = 2;
+  ctx2.stroke();
+
+  ctx2.textAlign = "center";
+
+  // emoji
+  ctx2.font = "52px serif";
+  ctx2.fillText("💀", W/2, 220);
+
+  ctx2.font = "bold 28px 'Boogaloo', cursive";
+  ctx2.fillStyle = "#e63946";
+  ctx2.fillText("MACHINE DOWN!", W/2, 258);
+
+  ctx2.font = "14px 'Nunito', sans-serif";
+  ctx2.fillStyle = "#ccc";
+  ctx2.fillText("The machine passed out in " + t.label.replace(/[^a-zA-Z ]/g,'').trim(), W/2, 285);
+
+  ctx2.font = "bold 18px 'Boogaloo', cursive";
+  ctx2.fillStyle = t.accentColor;
+  ctx2.fillText("Score: " + score, W/2, 316);
+
+  ctx2.font = "12px 'Nunito', sans-serif";
+  ctx2.fillStyle = "#888";
+  ctx2.fillText("Press R or use button below to restart", W/2, 352);
+}
+
+// ─────────────────────────────────────────────────────────
+// PAUSE SCREEN
+// ─────────────────────────────────────────────────────────
+function drawPauseScreen() {
+  const t = THEMES[selectedThemeName];
+  ctx2.fillStyle = "rgba(0,0,0,0.72)";
+  ctx2.fillRect(0, 0, W, H);
+
+  ctx2.fillStyle = "rgba(255,255,255,0.06)";
+  ctx2.beginPath();
+  ctx2.roundRect(60, 180, W - 120, 190, 18);
+  ctx2.fill();
+  ctx2.strokeStyle = t.accentColor + "99";
+  ctx2.lineWidth = 2;
+  ctx2.stroke();
+
+  ctx2.textAlign = "center";
+  ctx2.font = "46px serif";
+  ctx2.fillText("⏸", W / 2, 240);
+
+  ctx2.font = "bold 26px 'Boogaloo', cursive";
+  ctx2.fillStyle = t.accentColor;
+  ctx2.fillText("PAUSED", W / 2, 278);
+
+  ctx2.font = "13px 'Nunito', sans-serif";
+  ctx2.fillStyle = "#aaa";
+  ctx2.fillText("Press P or Esc to resume", W / 2, 306);
+
+  ctx2.font = "bold 13px 'Nunito', sans-serif";
+  ctx2.fillStyle = "#2dc653";
+  ctx2.fillText("Score: " + score + "  •  Hangover: " + Math.round(hangover) + "%", W / 2, 340);
+}
+
+// ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+function gameLoop() {
+  if (gameRunning && !gamePaused) update();
+
+  ctx2.clearRect(0, 0, W, H);
+  drawBackground();
+  drawItems();
+  drawPlayer();
+  drawOverlay();
+  drawCanvasHud();
+  drawPopups();
+
+  if (gamePaused && gameRunning) drawPauseScreen();
+  if (!gameRunning && hangover >= 100) drawGameOver();
+
+  requestAnimationFrame(gameLoop);
+}
+</script>
+</body>
+</html>
